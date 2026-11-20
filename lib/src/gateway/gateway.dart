@@ -611,8 +611,14 @@ class Gateway extends GatewayManager with EventParser {
         (Map<String, Object?> raw) => client.voice.parseVoiceState(raw, guildId: guild.id),
       ),
       members: parseMany(raw['members'] as List<Object?>, client.guilds[guild.id].members.parse),
-      channels: parseMany(raw['channels'] as List<Object?>, (Map<String, Object?> raw) => client.channels.parse(raw, guildId: guild.id) as GuildChannel),
-      threads: parseMany(raw['threads'] as List<Object?>, (Map<String, Object?> raw) => client.channels.parse(raw, guildId: guild.id) as Thread),
+      // Filter by subtype rather than casting each element: a channel of a type
+      // this version does not model (parsed as an `UnknownChannel`) is skipped
+      // instead of throwing and failing the entire GUILD_CREATE.
+      channels: parseMany(raw['channels'] as List<Object?>, (Map<String, Object?> raw) => client.channels.parse(raw, guildId: guild.id))
+          .whereType<GuildChannel>()
+          .toList(),
+      threads:
+          parseMany(raw['threads'] as List<Object?>, (Map<String, Object?> raw) => client.channels.parse(raw, guildId: guild.id)).whereType<Thread>().toList(),
       presences: parseMany(raw['presences'] as List<Object?>, parsePresenceUpdate),
       stageInstances: parseMany(raw['stage_instances'] as List<Object?>, client.channels.parseStageInstance),
       scheduledEvents: parseMany(raw['guild_scheduled_events'] as List<Object?>, client.guilds[guild.id].scheduledEvents.parse),

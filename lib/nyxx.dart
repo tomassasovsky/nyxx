@@ -189,6 +189,7 @@ export 'src/models/channel/types/guild_voice.dart' show GuildVoiceChannel;
 export 'src/models/channel/types/private_thread.dart' show PrivateThread;
 export 'src/models/channel/types/public_thread.dart' show PublicThread;
 export 'src/models/channel/types/guild_media.dart' show GuildMediaChannel;
+export 'src/models/channel/types/unknown.dart' show UnknownChannel;
 export 'src/models/message/activity.dart' show MessageActivity, MessageActivityType;
 export 'src/models/message/attachment.dart' show Attachment, AttachmentFlags;
 export 'src/models/message/author.dart' show MessageAuthor;

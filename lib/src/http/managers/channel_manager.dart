@@ -30,6 +30,7 @@ import 'package:nyxx/src/models/channel/types/guild_text.dart';
 import 'package:nyxx/src/models/channel/types/guild_voice.dart';
 import 'package:nyxx/src/models/channel/types/private_thread.dart';
 import 'package:nyxx/src/models/channel/types/public_thread.dart';
+import 'package:nyxx/src/models/channel/types/unknown.dart';
 import 'package:nyxx/src/models/channel/voice_channel.dart';
 import 'package:nyxx/src/models/invite/invite.dart';
 import 'package:nyxx/src/models/invite/invite_metadata.dart';
@@ -84,13 +85,14 @@ class ChannelManager extends ReadOnlyManager<Channel> {
       ChannelType.guildMedia: parseGuildMediaChannel,
     };
 
-    // A channel type newer than this version of nyxx knows about has no parser.
-    // Throw a descriptive error instead of a bare null-check `TypeError` so the
-    // cause is obvious in logs. Gateway.events catches this per event, so one
-    // unknown channel no longer terminates the whole event stream.
+    // Discord periodically adds channel types (for example type 20, "Server
+    // Home") that this version of nyxx does not model yet. Return a generic
+    // [UnknownChannel] instead of a bare null-check `TypeError` so that parsing
+    // a payload containing such a channel (e.g. GUILD_CREATE) succeeds for all
+    // the other, known channels. Drop this once every type is modelled.
     final parser = parsers[type];
     if (parser == null) {
-      throw FormatException('Unsupported channel type: ${type.value}', raw);
+      return UnknownChannel(id: Snowflake.parse(raw['id']!), manager: this, type: type);
     }
 
     return parser(raw, guildId: guildId);
