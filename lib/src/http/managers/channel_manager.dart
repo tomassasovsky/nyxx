@@ -84,7 +84,16 @@ class ChannelManager extends ReadOnlyManager<Channel> {
       ChannelType.guildMedia: parseGuildMediaChannel,
     };
 
-    return parsers[type]!(raw, guildId: guildId);
+    // A channel type newer than this version of nyxx knows about has no parser.
+    // Throw a descriptive error instead of a bare null-check `TypeError` so the
+    // cause is obvious in logs. Gateway.events catches this per event, so one
+    // unknown channel no longer terminates the whole event stream.
+    final parser = parsers[type];
+    if (parser == null) {
+      throw FormatException('Unsupported channel type: ${type.value}', raw);
+    }
+
+    return parser(raw, guildId: guildId);
   }
 
   GuildTextChannel parseGuildTextChannel(Map<String, Object?> raw, {Snowflake? guildId}) {
